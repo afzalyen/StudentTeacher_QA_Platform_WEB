@@ -1,0 +1,41 @@
+﻿@using System.Security.Claims;
+@using test_dotnet1_Models.Models
+@using test_dotnet1_Models.Identity // For UserType enum
+@model test_dotnet1_Models.Models.Question
+
+<h2>Question: @Model.Title</h2>
+<p>@Model.Description</p>
+<p>Asked by: @Model.UserId</p>
+<p>Created at: @Model.CreatedAt.ToString("g")</p>
+
+<h3>Answers</h3>
+<ul>
+    @foreach (var answer in Model.Answers)
+    {
+        <li>
+            <strong>@answer.UserId:</strong> @answer.Content <br />
+            <em>Answered at: @answer.CreatedAt.ToString("g")</em>
+        </li>
+    }
+</ul>
+
+@* Check if the user is a teacher or the question asker *@
+@if (ViewData["UserType"]?.ToString() == UserType.Teacher.ToString() || User.FindFirstValue(ClaimTypes.NameIdentifier) == @Model.UserId)
+{
+    <h3>Submit Your Answer</h3>
+    <form asp-action="SubmitAnswer" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="QuestionId" value="@Model.Id" />
+        <div>
+            <label for="Content">Answer:</label>
+            <textarea name="Content" required></textarea>
+        </div>
+        <button type="submit">Submit Answer</button>
+    </form>
+}
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
