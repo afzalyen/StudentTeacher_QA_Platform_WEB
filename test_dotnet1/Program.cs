@@ -46,6 +46,13 @@ app.UseRouting();
 app.UseAuthentication(); // Enable authentication
 app.UseAuthorization();  // Enable authorization
 
+// Call the SeedSuperAdmin method to create a super admin user
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    await DataSeed.SeedSuperAdmin(userManager); // Call the seeding method
+}
+
 // Configure routes for controllers and Razor Pages
 app.MapControllerRoute(
     name: "default",

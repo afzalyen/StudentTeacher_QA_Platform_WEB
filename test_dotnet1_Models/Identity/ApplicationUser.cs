@@ -13,6 +13,7 @@ public class ApplicationUser : IdentityUser
     public string? Name { get; set; }
     public string? InstituteName { get; set; }
     public string? InstituteIDCardNo { get; set; }
+    public bool IsSuperAdmin { get; set; }
 }
 
 public enum UserType
