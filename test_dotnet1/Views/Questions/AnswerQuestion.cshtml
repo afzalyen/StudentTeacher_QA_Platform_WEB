@@ -1,52 +1,93 @@
-﻿@using System.Security.Claims;
+﻿@using System.Security.Claims
 @using test_dotnet1_Models.Models
-@using test_dotnet1_Models.Identity 
+@using test_dotnet1_Models.Identity
 @model test_dotnet1_Models.Models.Question
 
-<h2>Question: @Model.Title</h2>
-<p>@Model.Description</p>
-<p>Asked by: @ViewBag.AskedByName</p> <!-- Display the student's name -->
-<p>Created at: @Model.CreatedAt.ToString("g")</p>
-
-<h3>Answers</h3>
-<ul>
-    @foreach (var answerInfo in ViewBag.Answers)
-    {
-        <li>
-            <strong>
-                @if (answerInfo.Answer.UserId == @Model.UserId) // Check if the answer was given by the question asker
-                {
-                    @answerInfo.UserDisplayName
-                    // If it's the same user, show their name
-                }
-                else
-                {
-                    // Assuming that if it's not the asker, it must be a teacher
-                    <span>@answerInfo.UserEmailPrefix</span>
-                    // Show the teacher's email prefix
-                }
-            </strong>: @answerInfo.Answer.Content <br />
-            <em>Answered at: @answerInfo.Answer.CreatedAt.ToString("g")</em>
-        </li>
-    }
-</ul>
-
-@if (ViewData["UserType"]?.ToString() == UserType.Teacher.ToString() || User.FindFirstValue(ClaimTypes.NameIdentifier) == @Model.UserId)
-{
-    <h3>Submit Your Answer</h3>
-    <form asp-action="SubmitAnswer" method="post">
-        @Html.AntiForgeryToken()
-        <input type="hidden" name="QuestionId" value="@Model.Id" />
-        <div>
-            <label for="Content">Answer:</label>
-            <textarea name="Content" required></textarea>
+<!-- Main container -->
+<div class="container my-5">
+    <div class="card shadow-sm mb-4">
+        <!-- Card for the question -->
+        <div class="card-header bg-primary text-white">
+            <!-- Same styling as Index -->
+            <h5 class="card-title">
+                <strong>Question Title:</strong> @Model.Title
+            </h5>
         </div>
-        <button type="submit">Submit Answer</button>
-    </form>
-}
+        <div class="card-body">
+            <p><strong>Question:</strong> @Model.Description</p>
+            <p class="text-muted" style="font-weight: bold; color: #007bff;">
+                <small>Asked By:</small>
+                <span style="color: #333;"> @ViewBag.AskedByName</span> <!-- Display the student's name -->
+            </p>
+            <p class="text-muted" style="font-weight: bold; color: #28a745;">
+                <small>Asked at:</small>
+                <span style="color: #333;"> @Model.CreatedAt.ToString("g")</span> <!-- Display the creation date -->
+            </p>
+        </div>
+    </div>
+
+    <h3 class="mt-4">Answers</h3>
+    <ul class="list-unstyled">
+        @foreach (var answerInfo in ViewBag.Answers)
+        {
+            <li class="mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <strong>
+                            @if (answerInfo.Answer.UserId == @Model.UserId) // Check if the answer was given by the question asker
+                            {
+                                @answerInfo.UserDisplayName
+                                // If it's the same user, show their name
+                            }
+                            else
+                            {
+                                // Assuming that if it's not the asker, it must be a teacher
+                                <span>@answerInfo.UserEmailPrefix</span>
+                                // Show the teacher's email prefix
+                            }
+                        </strong>: @answerInfo.Answer.Content <br />
+                        <em class="text-muted">Answered at: @answerInfo.Answer.CreatedAt.ToString("g")</em>
+                    </div>
+                </div>
+            </li>
+        }
+    </ul>
+
+    @if (ViewData["UserType"]?.ToString() == UserType.Teacher.ToString() || User.FindFirstValue(ClaimTypes.NameIdentifier) == @Model.UserId)
+    {
+        <h3 class="mt-4">Submit Your Answer</h3>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form asp-action="SubmitAnswer" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="QuestionId" value="@Model.Id" />
+                    <div class="mb-3">
+                        <label for="Content" class="form-label">Answer:</label>
+                        <textarea name="Content" class="form-control" rows="4" required></textarea> <!-- Made the textarea wider -->
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Answer</button>
+                </form>
+            </div>
+        </div>
+    }
+</div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @Html.Partial("_ValidationScriptsPartial") <!-- Use Partial instead of RenderPartialAsync -->
 }
+
+<!-- Inline CSS for further customization -->
+<style>
+    .card {
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+    }
+
+    .card-body {
+        padding: 15px;
+    }
+
+    .mt-4 {
+        margin-top: 20px;
+    }
+</style>

@@ -1,6 +1,6 @@
 ﻿@model IEnumerable<dynamic> // Dynamic to accommodate anonymous objects
 
-@using test_dotnet1_Models.Identity 
+@using test_dotnet1_Models.Identity
 
 @{
     var userType = (UserType)ViewData["UserType"];
@@ -8,19 +8,77 @@
 
 @if (userType != UserType.Teacher)
 {
-    <a asp-action="AskQuestion" class="btn btn-primary">Ask Question</a>
+    <a asp-action="AskQuestion" class="btn btn-primary mb-3">Ask Question</a>
 }
 
-<h2>Recent Questions</h2>
+<h2 class="text-center">Recent Questions</h2>
 
-<ul>
-    @foreach (var item in Model)
-    {
-        <li>
-            <h3><a asp-action="AnswerQuestion" asp-route-id="@item.Question.Id">@item.Question.Title</a></h3>
-            <p>@item.Question.Description</p>
-            <p>Asked By: @item.AskedBy</p>
-            <p>Created at: @item.Question.CreatedAt.ToString("g")</p>
-        </li>
+<!-- Container for questions -->
+<div class="container">
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-12 mb-4">
+                <!-- Changed to col-12 for full width -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title" style="text-align: left;">
+                            <!-- Align title to the left -->
+                            <strong>Question Title:</strong> @item.Question.Title <!-- Added "Question:" before title and made it bold -->
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text"><strong>Question:</strong> @item.Question.Description</p>
+                        <p class="text-muted" style="font-weight: bold; color: #007bff;">
+                            <small>Asked By:</small>
+                            <span style="color: #333;"> @item.AskedBy</span> <!-- Different color for value -->
+                        </p>
+                        <p class="text-muted" style="font-weight: bold; color: #28a745;">
+                            <small>Asked at:</small>
+                            <span style="color: #333;"> @item.Question.CreatedAt.ToString("g")</span> <!-- Different color for value -->
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        <a asp-action="AnswerQuestion" asp-route-id="@item.Question.Id" class="btn btn-info">View Answers</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Inline CSS -->
+<style>
+    .card {
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        transition: transform 0.2s;
     }
-</ul>
+
+        .card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+    .card-header {
+        font-size: 1.25rem;
+        font-weight: bold;
+        text-align: left; /* Align header text to the left */
+    }
+
+    .card-body {
+        padding: 15px;
+    }
+
+    .container {
+        margin-top: 20px;
+    }
+
+    h2 {
+        margin-bottom: 20px;
+    }
+
+    a.btn-primary {
+        float: right;
+    }
+</style>
