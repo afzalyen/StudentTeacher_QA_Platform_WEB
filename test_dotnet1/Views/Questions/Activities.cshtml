@@ -1,31 +1,73 @@
 ﻿@model IEnumerable<dynamic> // Dynamic to accommodate anonymous objects
 
-<h2>Activity</h2>
+<h2 class="text-center mb-4">Activities</h2>
 
-<ul>
-    @foreach (var item in Model)
-    {
-        <li>
-            <h3><a asp-action="AnswerQuestion" asp-route-id="@item.Question.Id">@item.Question.Title</a></h3>
-            <p>@item.Question.Description</p>
-            <p>Asked by: @item.AskedBy</p> <!-- Show the name of the user who asked -->
-            <p>Answered by: @if (item.AnsweredBy != null)
-                {
-                    @item.AnsweredBy
-                }
-                else
-                {
-                    <span>Not answered yet</span>
-                }</p> <!-- Show the answerer's name or email -->
-            <p>Created at: @item.Question.CreatedAt.ToString("g")</p>
+<!-- Container for activities -->
+<div class="container">
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title text-left">
+                            <strong>Question Title: </strong><a asp-action="AnswerQuestion" asp-route-id="@item.Question.Id" class="text-white">@item.Question.Title</a>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text"><strong>Question:</strong> @item.Question.Description</p>
+                        <p class="text-muted" style="font-weight: bold; color: #007bff;">
+                            <small>Asked By:</small>
+                            <span style="color: #333;"> @item.AskedBy</span>
+                        </p>
+                        <p class="text-muted" style="font-weight: bold; color: #6c757d;">
+                            <small>Created At:</small>
+                            <span style="color: #333;"> @item.Question.CreatedAt.ToString("g")</span>
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        @if (ViewData["UserType"] != null && ViewData["UserType"].ToString() == "Student" && !item.Question.IsAnswered) // Only show delete option for students on unanswered questions
+                        {
+                            <form asp-action="DeleteQuestion" method="post" onsubmit="return confirm('Are you sure you want to delete this question?');" class="d-inline">
+                                <input type="hidden" name="id" value="@item.Question.Id" />
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
 
-            @if (ViewData["UserType"] != null && ViewData["UserType"].ToString() == "Student" && !item.Question.IsAnswered) // Only show delete option for students on unanswered questions
-            {
-                <form asp-action="DeleteQuestion" method="post" onsubmit="return confirm('Are you sure you want to delete this question?');">
-                    <input type="hidden" name="id" value="@item.Question.Id" />
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            }
-        </li>
+<!-- Inline CSS -->
+<style>
+    .card {
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        transition: transform 0.2s;
     }
-</ul>
+
+        .card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+    .card-header {
+        font-size: 1.25rem;
+        font-weight: bold;
+        text-align: left; /* Align title to the left */
+    }
+
+    .card-body {
+        padding: 15px;
+    }
+
+    .container {
+        margin-top: 20px;
+    }
+
+    h2 {
+        margin-bottom: 20px;
+    }
+</style>

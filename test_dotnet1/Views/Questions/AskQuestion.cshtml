@@ -1,23 +1,63 @@
 ﻿@model test_dotnet1_Models.Models.Question
 
-<h2>Ask a Question</h2>
+<!-- Main container -->
+<div class="container my-5">
+    <h2 class="text-center mb-4">Ask a Question</h2>
 
-<form asp-action="AskQuestion" method="post">
-    <div>
-        <label asp-for="Title"></label>
-        <input asp-for="Title" required />
-        <span asp-validation-for="Title" class="text-danger"></span>
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Submit Your Question</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="AskQuestion" method="post">
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label"></label>
+                    <input asp-for="Title" class="form-control" required />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="4" required></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+                <button type="submit" class="btn btn-success btn-lg">Submit</button>
+            </form>
+        </div>
     </div>
-    <div>
-        <label asp-for="Description"></label>
-        <textarea asp-for="Description" required></textarea>
-        <span asp-validation-for="Description" class="text-danger"></span>
-    </div>
-    <button type="submit">Submit</button>
-</form>
+</div>
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
+
+<!-- Inline CSS for further customization -->
+<style>
+    .container {
+        max-width: 600px; /* Set maximum width for the form */
+        margin: auto; /* Center the container */
+    }
+
+    .card {
+        border-radius: 15px; /* Rounded corners for the card */
+    }
+
+    .form-label {
+        font-weight: bold; /* Make labels bold */
+    }
+
+    .btn-success {
+        background-color: #28a745; /* Custom color for the submit button */
+        border-color: #28a745; /* Custom border color */
+    }
+
+        .btn-success:hover {
+            background-color: #218838; /* Darker color on hover */
+            border-color: #1e7e34; /* Darker border color on hover */
+        }
+
+    h2 {
+        color: #343a40; /* Dark color for the heading */
+    }
+</style>
