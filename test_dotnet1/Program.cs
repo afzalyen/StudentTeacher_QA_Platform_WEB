@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using test_dotnet1.Areas.Identity;
 using test_dotnet_Data_Access.Identity;
-//using test_dotnet1.Models.Identity; // Ensure this matches your project namespace
 using test_dotnet1_Models.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +21,13 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+// Configure application cookie options
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Identity/Account/Login"; // Redirect to login if not authenticated
+    options.AccessDeniedPath = "/Identity/Account/AccessDenied"; // Redirect for access denied
+});
+
 // Add services to the container for MVC and Razor Pages
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
@@ -33,9 +39,6 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error"); // Error handling for production
 }
-
-
-
 
 // Middleware configuration
 app.UseStaticFiles();

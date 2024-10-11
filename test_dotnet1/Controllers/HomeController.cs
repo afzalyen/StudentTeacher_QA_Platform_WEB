@@ -31,6 +31,7 @@ namespace test_dotnet1.Controllers
             return user?.UserType ?? UserType.Student;
         }
 
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             var userType = await GetCurrentUserTypeAsync();

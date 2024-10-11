@@ -1,6 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-#nullable disable
+﻿// Logout.cshtml.cs
 
 using System;
 using System.Threading.Tasks;
@@ -9,7 +7,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using test_dotnet1.Areas.Identity;
 using test_dotnet1_Models.Identity;
 
 namespace test_dotnet1.Areas.Identity.Pages.Account
@@ -29,16 +26,9 @@ namespace test_dotnet1.Areas.Identity.Pages.Account
         {
             await _signInManager.SignOutAsync();
             _logger.LogInformation("User logged out.");
-            if (returnUrl != null)
-            {
-                return LocalRedirect(returnUrl);
-            }
-            else
-            {
-                // This needs to be a redirect so that the browser performs a new
-                // request and the identity for the user gets updated.
-                return RedirectToPage();
-            }
+
+            // Redirect to the Login page after logout
+            return RedirectToPage("/Account/Login"); // Adjust this path if your Login page is located elsewhere
         }
     }
 }
