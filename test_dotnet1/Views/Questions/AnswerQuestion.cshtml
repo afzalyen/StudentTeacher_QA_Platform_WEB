@@ -1,25 +1,36 @@
 ﻿@using System.Security.Claims;
 @using test_dotnet1_Models.Models
-@using test_dotnet1_Models.Identity // For UserType enum
+@using test_dotnet1_Models.Identity 
 @model test_dotnet1_Models.Models.Question
 
 <h2>Question: @Model.Title</h2>
 <p>@Model.Description</p>
-<p>Asked by: @Model.UserId</p>
+<p>Asked by: @ViewBag.AskedByName</p> <!-- Display the student's name -->
 <p>Created at: @Model.CreatedAt.ToString("g")</p>
 
 <h3>Answers</h3>
 <ul>
-    @foreach (var answer in Model.Answers)
+    @foreach (var answerInfo in ViewBag.Answers)
     {
         <li>
-            <strong>@answer.UserId:</strong> @answer.Content <br />
-            <em>Answered at: @answer.CreatedAt.ToString("g")</em>
+            <strong>
+                @if (answerInfo.Answer.UserId == @Model.UserId) // Check if the answer was given by the question asker
+                {
+                    @answerInfo.UserDisplayName
+                    // If it's the same user, show their name
+                }
+                else
+                {
+                    // Assuming that if it's not the asker, it must be a teacher
+                    <span>@answerInfo.UserEmailPrefix</span>
+                    // Show the teacher's email prefix
+                }
+            </strong>: @answerInfo.Answer.Content <br />
+            <em>Answered at: @answerInfo.Answer.CreatedAt.ToString("g")</em>
         </li>
     }
 </ul>
 
-@* Check if the user is a teacher or the question asker *@
 @if (ViewData["UserType"]?.ToString() == UserType.Teacher.ToString() || User.FindFirstValue(ClaimTypes.NameIdentifier) == @Model.UserId)
 {
     <h3>Submit Your Answer</h3>

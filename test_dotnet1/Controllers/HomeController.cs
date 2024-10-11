@@ -36,11 +36,45 @@ namespace test_dotnet1.Controllers
             var userType = await GetCurrentUserTypeAsync();
             ViewData["UserType"] = userType;
 
+            // Step 1: Get all questions that are not deleted, including answers
             var questions = await _context.Questions
-                .Where(q => !q.IsDeleted) // Only fetch not deleted questions
+                .Where(q => !q.IsDeleted)
+                .Include(q => q.Answers) // Include answers to avoid multiple queries
+                .OrderByDescending(q => q.CreatedAt)
                 .ToListAsync();
-            return View(questions);
+
+            // Step 2: Create a list to hold the questions with their associated user info
+            var questionsWithUserInfo = new List<object>();
+
+            // Step 3: Loop through the questions and fetch user information
+            foreach (var question in questions)
+            {
+                var askedByUser = await _userManager.FindByIdAsync(question.UserId);
+
+                string answeredBy = null; // Initialize answeredBy as null
+                if (question.IsAnswered)
+                {
+                    var answer = question.Answers.FirstOrDefault(); // Get the first answer if available
+                    if (answer != null) // Check if answer is not null
+                    {
+                        var answeringUser = await _userManager.FindByIdAsync(answer.UserId);
+                        answeredBy = answeringUser?.Email?.Split('@')[0]; // Get first part of Teacher's email
+                    }
+                }
+
+                questionsWithUserInfo.Add(new
+                {
+                    Question = question,
+                    AskedBy = askedByUser?.Name, // Assuming Name is not null
+                    AnsweredBy = answeredBy
+                });
+            }
+
+            return View(questionsWithUserInfo);
         }
+
+
+
 
         public IActionResult Privacy()
         {
@@ -89,25 +123,47 @@ namespace test_dotnet1.Controllers
             return RedirectToAction("Index");
         }
 
-        public IActionResult AnswerQuestion(int id)
+        public async Task<IActionResult> AnswerQuestion(int id)
         {
-            var question = _context.Questions
+            var question = await _context.Questions
                 .Include(q => q.Answers)
-                .FirstOrDefault(q => q.Id == id);
+                .FirstOrDefaultAsync(q => q.Id == id);
 
             if (question == null)
             {
                 return NotFound();
             }
-            // Get the UserType of the current user and set it in ViewData
+
+            // Get the asked by user's name
+            var askedByUser = await _userManager.FindByIdAsync(question.UserId);
+
+            // Create a new list for answers with display information
+            var answersWithUserInfo = new List<object>();
+
+            // Loop through the answers and fetch user information
+            foreach (var answer in question.Answers)
+            {
+                var answeringUser = await _userManager.FindByIdAsync(answer.UserId);
+                answersWithUserInfo.Add(new
+                {
+                    Answer = answer,
+                    UserDisplayName = answeringUser?.Name, // Get the display name of the answerer
+                    UserEmailPrefix = answeringUser?.Email?.Split('@')[0] // Get the first part of Teacher's email
+                });
+            }
+
+            // Set the UserType of the current user in ViewData
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var user = _context.Users.FirstOrDefault(u => u.Id == userId);
+            var user = await _userManager.FindByIdAsync(userId);
             ViewData["UserType"] = user?.UserType;
 
-            return View("~/Views/Questions/AnswerQuestion.cshtml", question);
+            ViewBag.AskedByName = askedByUser?.Name; // Store asked by user's name in ViewBag
+            ViewBag.Answers = answersWithUserInfo; // Pass answers with user info to the view
 
-           
+            return View("~/Views/Questions/AnswerQuestion.cshtml", question);
         }
+
+
 
         [HttpPost]
         [Authorize]
@@ -162,7 +218,6 @@ namespace test_dotnet1.Controllers
 
             List<Question> questions;
 
-            // Logging to help debug
             _logger.LogInformation("User ID: {UserId}, User Type: {UserType}", userId, userType);
 
             try
@@ -171,23 +226,51 @@ namespace test_dotnet1.Controllers
                 {
                     // Show questions asked by the student
                     questions = await _context.Questions
-                        .Where(q => q.UserId == userId && !q.IsDeleted) // Ensure we filter out deleted questions
+                        .Where(q => q.UserId == userId && !q.IsDeleted)
+                        .OrderByDescending(q => q.CreatedAt)
                         .ToListAsync();
                 }
                 else if (userType == UserType.Teacher)
                 {
                     // Show questions answered by the teacher
                     questions = await _context.Questions
-                        .Where(q => q.Answers.Any(a => a.UserId == userId) && !q.IsDeleted) // Ensure we filter out deleted questions
+                        .Where(q => q.Answers.Any(a => a.UserId == userId) && !q.IsDeleted)
+                        .OrderByDescending(q => q.CreatedAt)
                         .ToListAsync();
                 }
                 else
                 {
-                    questions = new List<Question>(); // Empty list for other user types, if any
+                    questions = new List<Question>();
+                }
+
+                // Create a list to hold questions with user info
+                var questionsWithUserInfo = new List<object>();
+
+                foreach (var question in questions)
+                {
+                    var askedByUser = await _userManager.FindByIdAsync(question.UserId);
+
+                    string answeredBy = null; // Initialize answeredBy as null
+                    if (question.IsAnswered)
+                    {
+                        var answer = question.Answers.FirstOrDefault(); // Get the first answer if available
+                        if (answer != null) // Check if answer is not null
+                        {
+                            var answeringUser = await _userManager.FindByIdAsync(answer.UserId);
+                            answeredBy = answeringUser?.Email?.Split('@')[0]; // Get first part of Teacher's email
+                        }
+                    }
+
+                    questionsWithUserInfo.Add(new
+                    {
+                        Question = question,
+                        AskedBy = askedByUser?.Name, // Get the name of the user who asked
+                        AnsweredBy = answeredBy
+                    });
                 }
 
                 ViewData["UserType"] = userType.ToString(); // Set the UserType in ViewData
-                return View("~/Views/Questions/Activities.cshtml", questions);
+                return View("~/Views/Questions/Activities.cshtml", questionsWithUserInfo); // Pass the modified list to the view
             }
             catch (Exception ex)
             {
@@ -195,6 +278,7 @@ namespace test_dotnet1.Controllers
                 return StatusCode(500, "Internal server error"); // Return a server error
             }
         }
+
 
 
         [HttpPost]
