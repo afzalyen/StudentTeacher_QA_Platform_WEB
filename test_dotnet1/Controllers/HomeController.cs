@@ -118,9 +118,10 @@ namespace test_dotnet1.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var question = await _context.Questions.FindAsync(answer.QuestionId);
 
+            // Ensure only teachers or the question's author can submit an answer
             if (userType != UserType.Teacher && question.UserId != userId)
             {
-                return Forbid(); // Only the teacher or the student who asked the question can submit an answer
+                return Forbid();
             }
 
             if (ModelState.IsValid)
@@ -129,6 +130,14 @@ namespace test_dotnet1.Controllers
                 answer.CreatedAt = DateTime.Now;
 
                 _context.Answers.Add(answer);
+
+                // Set IsAnswered to true if the answer is submitted by a teacher
+                if (userType == UserType.Teacher)
+                {
+                    question.IsAnswered = true;
+                    _context.Questions.Update(question);
+                }
+
                 await _context.SaveChangesAsync();
                 return RedirectToAction("AnswerQuestion", new { id = answer.QuestionId });
             }
@@ -143,6 +152,37 @@ namespace test_dotnet1.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+
+        [Authorize]
+        public async Task<IActionResult> Activities()
+        {
+            var userType = await GetCurrentUserTypeAsync();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            List<Question> questions;
+
+            if (userType == UserType.Student)
+            {
+                // Show questions asked by the student
+                questions = await _context.Questions
+                    .Where(q => q.UserId == userId)
+                    .ToListAsync();
+            }
+            else if (userType == UserType.Teacher)
+            {
+                // Show questions answered by the teacher
+                questions = await _context.Questions
+                    .Where(q => q.Answers.Any(a => a.UserId == userId))
+                    .ToListAsync();
+            }
+            else
+            {
+                questions = new List<Question>(); // Empty list for other user types, if any
+            }
+
+            return View("~/Views/Questions/Activities.cshtml", questions);
         }
     }
 }

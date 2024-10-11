@@ -1,0 +1,15 @@
+﻿@model List<test_dotnet1_Models.Models.Question>
+
+<h2>Activity</h2>
+
+<ul>
+    @foreach (var question in Model)
+    {
+        <li>
+            <h3><a asp-action="AnswerQuestion" asp-route-id="@question.Id">@question.Title</a></h3>
+            <p>@question.Description</p>
+            <p>Asked by: @question.UserId</p>
+            <p>Created at: @question.CreatedAt.ToString("g")</p>
+        </li>
+    }
+</ul>
