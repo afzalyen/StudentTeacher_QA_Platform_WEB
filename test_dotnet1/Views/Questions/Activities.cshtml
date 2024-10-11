@@ -10,6 +10,14 @@
             <p>@question.Description</p>
             <p>Asked by: @question.UserId</p>
             <p>Created at: @question.CreatedAt.ToString("g")</p>
+
+            @if (ViewData["UserType"] != null && ViewData["UserType"].ToString() == "Student" && !question.IsAnswered) // Only show delete option for students on unanswered questions
+            {
+                <form asp-action="DeleteQuestion" method="post" onsubmit="return confirm('Are you sure you want to delete this question?');">
+                    <input type="hidden" name="id" value="@question.Id" />
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            }
         </li>
     }
 </ul>

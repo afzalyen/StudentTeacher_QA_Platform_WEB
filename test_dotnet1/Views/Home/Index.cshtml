@@ -1,39 +1,25 @@
-﻿@model IEnumerable<Question>
+﻿@model IEnumerable<test_dotnet1_Models.Models.Question>
 @using test_dotnet1_Models.Identity
 
 @{
     var userType = (UserType)ViewData["UserType"];
 }
+
 @if (userType != UserType.Teacher)
 {
     <a asp-action="AskQuestion" class="btn btn-primary">Ask Question</a>
 }
-<h2>Recent Questions</h2>
-<table>
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>Created At</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var question in Model)
-        {
-            <tr>
-                <td>
-                    <a asp-action="AnswerQuestion" asp-route-id="@question.Id">@question.Title</a>
-                </td>
-                <td>@question.CreatedAt.ToShortDateString()</td>
-                <td>
-                    <form asp-action="DeleteQuestion" method="post" style="display:inline;">
-                        <input type="hidden" name="id" value="@question.Id" />
-                        <button type="submit">Delete</button>
-                    </form>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
 
-                   
+<h2>Recent Questions</h2>
+
+<ul>
+    @foreach (var question in Model)
+    {
+        <li>
+            <h3><a asp-action="AnswerQuestion" asp-route-id="@question.Id">@question.Title</a></h3>
+            <p>@question.Description</p>
+            <p>Asked by: @question.UserId</p> <!-- Added Asked By information -->
+            <p>Created at: @question.CreatedAt.ToString("g")</p>
+        </li>
+    }
+</ul>

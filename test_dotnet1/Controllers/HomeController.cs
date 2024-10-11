@@ -34,12 +34,11 @@ namespace test_dotnet1.Controllers
         public async Task<IActionResult> Index()
         {
             var userType = await GetCurrentUserTypeAsync();
-            _logger.LogInformation("##################");
-            _logger.LogInformation("isTeacher: {isTeacher}", userType == UserType.Teacher);
-
             ViewData["UserType"] = userType;
 
-            var questions = _context.Questions.ToList();
+            var questions = await _context.Questions
+                .Where(q => !q.IsDeleted) // Only fetch not deleted questions
+                .ToListAsync();
             return View(questions);
         }
 
@@ -163,26 +162,58 @@ namespace test_dotnet1.Controllers
 
             List<Question> questions;
 
-            if (userType == UserType.Student)
+            // Logging to help debug
+            _logger.LogInformation("User ID: {UserId}, User Type: {UserType}", userId, userType);
+
+            try
             {
-                // Show questions asked by the student
-                questions = await _context.Questions
-                    .Where(q => q.UserId == userId)
-                    .ToListAsync();
+                if (userType == UserType.Student)
+                {
+                    // Show questions asked by the student
+                    questions = await _context.Questions
+                        .Where(q => q.UserId == userId && !q.IsDeleted) // Ensure we filter out deleted questions
+                        .ToListAsync();
+                }
+                else if (userType == UserType.Teacher)
+                {
+                    // Show questions answered by the teacher
+                    questions = await _context.Questions
+                        .Where(q => q.Answers.Any(a => a.UserId == userId) && !q.IsDeleted) // Ensure we filter out deleted questions
+                        .ToListAsync();
+                }
+                else
+                {
+                    questions = new List<Question>(); // Empty list for other user types, if any
+                }
+
+                ViewData["UserType"] = userType.ToString(); // Set the UserType in ViewData
+                return View("~/Views/Questions/Activities.cshtml", questions);
             }
-            else if (userType == UserType.Teacher)
+            catch (Exception ex)
             {
-                // Show questions answered by the teacher
-                questions = await _context.Questions
-                    .Where(q => q.Answers.Any(a => a.UserId == userId))
-                    .ToListAsync();
+                _logger.LogError(ex, "An error occurred while loading activities for User ID: {UserId}", userId);
+                return StatusCode(500, "Internal server error"); // Return a server error
             }
-            else
+        }
+
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> DeleteQuestion(int id)
+        {
+            var userType = await GetCurrentUserTypeAsync();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var question = await _context.Questions.FindAsync(id);
+
+            if (question == null || question.UserId != userId || question.IsAnswered)
             {
-                questions = new List<Question>(); // Empty list for other user types, if any
+                return Forbid(); // Only allow students to delete their own unanswered questions
             }
 
-            return View("~/Views/Questions/Activities.cshtml", questions);
+            question.IsDeleted = true; // Mark question as deleted
+            _context.Questions.Update(question);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Activities"); // Redirect back to Activities
         }
     }
 }
